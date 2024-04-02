@@ -8,6 +8,7 @@ configDotenv()
 
 class UserController {
     
+    // Method for Registering a User
     async registerUser(req: Request, res:Response ){
         const { name, email, password, confirm_password} = req.body
 
@@ -20,7 +21,7 @@ class UserController {
                 })
                 
             }
-    
+            // checking if a user exists using the users email
             const existingUser = await User.findOne({ email })
             if (existingUser) {
                 return res.status(400).json({
@@ -28,14 +29,16 @@ class UserController {
                     message: 'Sorry but it seems like the user with this email Exists, You can Login Instead'
                 })
             }
-    
+            
+            // checking if the password and confirm_password field matched..
             if (password !== confirm_password) {
                 return res.status(400).json({
                     status: 'Failed...', 
                     message: 'Sorry, Your Password Does Not Match, Please check and Try Again...'
                 })
             }
-    
+            
+            // assigning roles to user who registered been guest or admin based on the email provided and hashing password
             let role = 'guest'
             const hashedPassword = bcrypt.hashSync(password, 10)
     
@@ -44,6 +47,7 @@ class UserController {
             }
     
             
+            // Saving the user after all the parameters are satisfied
     
             const user = new User({name, email, password:hashedPassword, role})
             await user.save()
@@ -54,34 +58,13 @@ class UserController {
         } catch (error:unknown | any) {
             res.status(500).json({
                 status: 'Error',
-                message: error.message,
-                name: error.name,
-                stackTrace: error.stack
+                message: error.message
             })
         }
 
 
     }
 
-    // get all users
-    async getAllUsers(req:Request, res:Response){
-        const users = await User.find({})
-        if (!users || users.length === 0) {
-            return res.status(404).json({
-                status: 'Failed...',
-                message: 'Sorry No Existing User'
-            })
-        }
-
-        res.status(200).json({
-            status: 'Success',
-            data: {
-                users
-            }
-        })
-
-
-    }
 
     // login method 
 
@@ -89,13 +72,15 @@ class UserController {
         try {
             const {email, password } = req.body 
 
+            // checking if password and email field are empty
             if(!email || !password){
                 res.status(400).json({
                     status: 'Failed...', 
                     message: 'Email and Password Field are Required, kindly provide them'
                 })
             }
-    
+            
+            // Checking if a user exists in the database using the users email
             const user = await User.findOne({ email })
             if(!user){
                 return res.status(404).json({
@@ -103,7 +88,8 @@ class UserController {
                     message: 'Sorry User does not Exist'
                 })
             }
-    
+            
+            // comparing password provided and the password in the database
             const passwordCompare = bcrypt.compareSync(password, user.password)
     
             if(!passwordCompare){
@@ -113,6 +99,7 @@ class UserController {
                 })
             }
 
+            // creating jwt token for authentication and authorization 
             const token = jwt.sign({id:user._id}, process.env.SECRET_KEY as string, { expiresIn: '1hr'})
             res.status(200).json({
                 status: 'Success',
@@ -133,19 +120,6 @@ class UserController {
 
     }
 
-    async deleteAllUsers(req:Request, res:Response){
-        const userDeleted = await User.deleteMany()
-        if (!userDeleted) {
-           return res.status(404).json({
-                status: 'Failed...',
-                message: 'No User Found....'
-            })
-        }
-        res.status(204).json({
-            status: 'Success', 
-            message: 'All Users Deleted Successfully...'
-        })
-    }
 }
 
 export default UserController

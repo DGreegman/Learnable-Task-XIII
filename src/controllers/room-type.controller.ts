@@ -95,23 +95,6 @@ class RoomsTypesController {
         
     }
 
-    // Delete all the Documents
-
-    async deleteAll(req:Request, res:Response){
-        try {
-            const allRoomsTypes = await RoomsTypes.deleteMany()
-            res.status(204).json({message: 'All Rooms Types Deleted Successfully...'})
-        } catch (error : unknown | any) {
-            console.log(error.message);
-            res.status(500).json({
-                status: 'Error',
-                message: 'An Unexpected Error Occurred...',
-                name: error.name,
-                stackTrace: error.stack
-            })
-            
-        }
-    }
 }
 
 export default RoomsTypesController
