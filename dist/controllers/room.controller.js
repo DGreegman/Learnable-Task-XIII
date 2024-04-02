@@ -13,37 +13,64 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const room_model_1 = __importDefault(require("../models/room.model"));
+const CustomError_1 = __importDefault(require("../errors/CustomError"));
 class RoomsController {
-    // Method to get all the rooms available 
-    getAllRooms(req, res) {
+    // Method to get all the rooms available and also search room by some parameters
+    getAllRooms(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const rooms = yield room_model_1.default.find({});
             try {
-                // checking if the there is a room created already...
-                if (!rooms || rooms.length === 0) {
-                    return res.status(404).json({
-                        status: 'Fail',
-                        message: 'Sorry, but it seems like no room Have been created Yet.. kindly Do so if you have the Permission...'
-                    });
+                let filters = {};
+                if (typeof req.query.search === 'string') {
+                    filters.name = { $regex: new RegExp(req.query.search, "i") };
                 }
-                res.status(200).json({
-                    status: 'Success',
-                    data: {
-                        rooms
+                if (typeof req.query.roomType === 'string') {
+                    filters.name = { $regex: new RegExp(req.query.roomType, "i") };
+                }
+                if (req.query.minPrice || req.query.maxPrice) {
+                    filters.price = {};
+                    if (typeof req.query.minPrice === 'string') {
+                        filters.price.$gte = parseInt(req.query.minPrice);
                     }
-                });
+                    if (typeof req.query.maxPrice === 'string') {
+                        filters.price.$lte = parseInt(req.query.maxPrice);
+                    }
+                }
+                const rooms = yield room_model_1.default.find(filters);
+                return rooms;
             }
             catch (error) {
-                console.log(error.name);
-                res.status(500).json({
-                    status: 'Error',
-                    message: error.message,
-                    name: error.name,
-                    stackTrace: error.stack
-                });
+                next(new CustomError_1.default('An Error Occurred', 500));
             }
+            /*         try {
+                        // checking if the there is a room created already...
+                        if (!rooms || rooms.length === 0) {
+                            return res.status(404).json({
+                                status: 'Fail',
+                                message: 'Sorry, but it seems like no room Have been created Yet.. kindly Do so if you have the Permission...'
+                            })
+                        }
+            
+                        res.status(200).json({
+                            status: 'Success',
+                            data: {
+                                rooms
+                            }
+                        })
+                        
+                    } catch (error : unknown | any ) {
+                        console.log(error.name)
+                        res.status(500).json({
+                            status: 'Error',
+                            message: error.message,
+                            name: error.name,
+                            stackTrace: error.stack
+            
+                        })
+                    }
+             */
         });
     }
+    // method to create a room 
     createRoom(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -84,30 +111,39 @@ class RoomsController {
                 res.status(500).json({
                     status: 'Error',
                     message: error.message,
-                    name: error.name,
-                    stackTrace: error.stack
                 });
             }
         });
     }
+    // method to get a Particular room 
     getARoom(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
-            const room = yield room_model_1.default.findById(id);
-            if (!room) {
-                return res.status(400).json({
-                    status: 'Failed...',
-                    message: 'Sorry...., but it seems like the room you requested does not exist...'
+            try {
+                const room = yield room_model_1.default.findById(id);
+                if (!room) {
+                    return res.status(400).json({
+                        status: 'Failed...',
+                        message: 'Sorry...., but it seems like the room you requested does not exist...'
+                    });
+                }
+                res.status(200).json({
+                    status: 'Success...',
+                    data: {
+                        room
+                    }
                 });
             }
-            res.status(200).json({
-                status: 'Success...',
-                data: {
-                    room
-                }
-            });
+            catch (error) {
+                console.log(error.name);
+                res.status(500).json({
+                    status: 'Error',
+                    message: error.message,
+                });
+            }
         });
     }
+    // method to update a room 
     updateRoom(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
@@ -132,12 +168,11 @@ class RoomsController {
                 res.status(500).json({
                     status: 'Error',
                     message: error.message,
-                    name: error.name,
-                    stackTrace: error.stack
                 });
             }
         });
     }
+    // method to delete a room
     deleteRoom(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
@@ -159,9 +194,7 @@ class RoomsController {
                 console.log(error.name);
                 res.status(500).json({
                     status: 'Error',
-                    message: error.message,
-                    name: error.name,
-                    stackTrace: error.stack
+                    message: error.message
                 });
             }
         });

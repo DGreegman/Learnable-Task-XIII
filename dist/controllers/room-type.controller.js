@@ -98,23 +98,5 @@ class RoomsTypesController {
             }
         });
     }
-    // Delete all the Documents
-    deleteAll(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const allRoomsTypes = yield room_type_model_1.default.deleteMany();
-                res.status(204).json({ message: 'All Rooms Types Deleted Successfully...' });
-            }
-            catch (error) {
-                console.log(error.message);
-                res.status(500).json({
-                    status: 'Error',
-                    message: 'An Unexpected Error Occurred...',
-                    name: error.name,
-                    stackTrace: error.stack
-                });
-            }
-        });
-    }
 }
 exports.default = RoomsTypesController;
